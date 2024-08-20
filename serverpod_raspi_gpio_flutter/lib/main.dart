@@ -10,6 +10,15 @@ import 'package:serverpod_flutter/serverpod_flutter.dart';
 var client = Client('http://$localhost:8080/')
   ..connectivityMonitor = FlutterConnectivityMonitor();
 
+enum GPIO_State {
+  low(false),
+  high(true);
+
+  const GPIO_State(this.state);
+
+  final bool state;
+}
+
 void main() {
   runApp(const MyApp());
 }
@@ -24,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Serverpod Example'),
+      home: const MyHomePage(title: 'Serverpod Raspi GPIO Example'),
     );
   }
 }
@@ -44,14 +53,14 @@ class MyHomePageState extends State<MyHomePage> {
   String? _resultMessage;
   String? _errorMessage;
 
-  final _textEditingController = TextEditingController();
+  GPIO_State selectedStete = GPIO_State.low;
 
   // Calls the `hello` method of the `example` endpoint. Will set either the
   // `_resultMessage` or `_errorMessage` field, depending on if the call
   // is successful.
   void _callHello() async {
     try {
-      final result = await client.example.hello(_textEditingController.text);
+      final result = await client.example.hello(selectedStete.name);
       setState(() {
         _errorMessage = null;
         _resultMessage = result;
@@ -73,14 +82,24 @@ class MyHomePageState extends State<MyHomePage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
-              child: TextField(
-                controller: _textEditingController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter your name',
+            SegmentedButton<GPIO_State>(
+              segments: <ButtonSegment<GPIO_State>>[
+                ButtonSegment<GPIO_State>(
+                  value: GPIO_State.low,
+                  label: Text('LOW'),
                 ),
-              ),
+                ButtonSegment<GPIO_State>(
+                  value: GPIO_State.high,
+                  label: Text('HIGH'),
+                ),
+              ],
+              selected: <GPIO_State>{selectedStete},
+              selectedIcon: Icon(Icons.bolt),
+              onSelectionChanged: (p0) {
+                setState(() {
+                  selectedStete = p0.first;
+                });
+              },
             ),
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
